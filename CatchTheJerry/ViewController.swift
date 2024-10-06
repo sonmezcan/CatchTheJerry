@@ -11,17 +11,11 @@ class ViewController: UIViewController {
     @IBOutlet weak var scoreLabel: UILabel!
     @IBOutlet weak var timeLabel: UILabel!
     @IBOutlet weak var highScoreLabel: UILabel!
-    @IBOutlet weak var jerry1: UIImageView!
-    @IBOutlet weak var jerry2: UIImageView!
-    @IBOutlet weak var jerry3: UIImageView!
-    @IBOutlet weak var jerry4: UIImageView!
-    @IBOutlet weak var jerry5: UIImageView!
-    @IBOutlet weak var jerry6: UIImageView!
-    @IBOutlet weak var jerry7: UIImageView!
-    @IBOutlet weak var jerry8: UIImageView!
-    @IBOutlet weak var jerry9: UIImageView!
     @IBOutlet weak var button: UIButton!
+    @IBOutlet weak var jerryGif: UIImageView!
     
+    
+    @IBOutlet var jerryImageViews: [UIImageView]!
     
     var score = 0
     var timer = Timer()
@@ -30,152 +24,117 @@ class ViewController: UIViewController {
     var hideTimer = Timer()
     var highScore = 0
     
+    // Constants
+    let gameDuration = 10
+    let jerryHideInterval = 0.5
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let logoGif = UIImage.gifImageWithName("jerryGif")
+        jerryGif.image = logoGif
         
         scoreLabel.text = "\(score)"
         button.dropShadow(radius: 1.0)
         
-        
-        //Highscore check
-        
+        checkHighScore()
+        setupJerryImageViews()
+    }
+    
+    // Highscore check
+    func checkHighScore() {
         let storedHighScore = UserDefaults.standard.object(forKey: "highscore")
-        
-        if storedHighScore == nil {
-            highScore = 0
-            highScoreLabel.text = "\(highScore)"
-        }
-        
         if let newScore = storedHighScore as? Int {
             highScore = newScore
-            highScoreLabel.text = "\(highScore)"
+        } else {
+            highScore = 0
         }
-        
-        
-        //Images
-        jerry1.isUserInteractionEnabled = true
-        jerry2.isUserInteractionEnabled = true
-        jerry3.isUserInteractionEnabled = true
-        jerry4.isUserInteractionEnabled = true
-        jerry5.isUserInteractionEnabled = true
-        jerry6.isUserInteractionEnabled = true
-        jerry7.isUserInteractionEnabled = true
-        jerry8.isUserInteractionEnabled = true
-        jerry9.isUserInteractionEnabled = true
-        
-        let recognizer1 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer2 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer3 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer4 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer5 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer6 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer7 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer8 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        let recognizer9 = UITapGestureRecognizer(target: self, action: #selector(increaseScore))
-        
-        jerry1.addGestureRecognizer(recognizer1)
-        jerry2.addGestureRecognizer(recognizer2)
-        jerry3.addGestureRecognizer(recognizer3)
-        jerry4.addGestureRecognizer(recognizer4)
-        jerry5.addGestureRecognizer(recognizer5)
-        jerry6.addGestureRecognizer(recognizer6)
-        jerry7.addGestureRecognizer(recognizer7)
-        jerry8.addGestureRecognizer(recognizer8)
-        jerry9.addGestureRecognizer(recognizer9)
-        
-        jerryArray = [jerry1, jerry2, jerry3, jerry4, jerry5, jerry6, jerry7, jerry8, jerry9]
-        
-        //Timers
-        
-
-        
+        highScoreLabel.text = "\(highScore)"
+    }
+    
+    // Arranging jerry pics
+    func setupJerryImageViews() {
+        for jerry in jerryImageViews {
+            jerry.isUserInteractionEnabled = true
+            jerry.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(increaseScore)))
+        }
+        jerryArray = jerryImageViews
     }
     
     @IBAction func buttonPressed(_ sender: UIButton) {
-        counter = 10
+        startGame()
+    }
+    
+    func startGame() {
+        jerryGif.isHidden = true
+        score = 0
+        scoreLabel.text = "\(score)"
+        counter = gameDuration
         timeLabel.text = String(counter)
         
+        // start timers
         timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(countDown), userInfo: nil, repeats: true)
-        hideTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(hidejerry), userInfo: nil, repeats: true)
+        hideTimer = Timer.scheduledTimer(timeInterval: jerryHideInterval, target: self, selector: #selector(hideJerry), userInfo: nil, repeats: true)
         
-        hidejerry()
+        hideJerry()
         button.isHidden = true
     }
     
-    @objc func hidejerry() {
+    @objc func hideJerry() {
+        for jerry in jerryArray {
+            jerry.isHidden = true
+        }
+        
+        // show a random jerry
+        let random = Int(arc4random_uniform(UInt32(jerryArray.count)))
+        jerryArray[random].isHidden = false
+    }
+    
+    @objc func increaseScore() {
+        score += 1
+        scoreLabel.text = "\(score)"
+    }
+    
+    @objc func countDown() {
+        counter -= 1
+        timeLabel.text = String(counter)
+        
+        if counter == 0 {
+            endGame()
+        }
+    }
+    
+    func endGame() {
+        timer.invalidate()
+        hideTimer.invalidate()
         
         for jerry in jerryArray {
             jerry.isHidden = true
         }
         
-        let random = Int(arc4random_uniform(UInt32(jerryArray.count - 1)))
-        jerryArray[random].isHidden = false
-        
-    }
-    
-    
-    
-    @objc func increaseScore() {
-        score += 1
-        scoreLabel.text = "Score: \(score)"
-    }
-    
-    @objc func countDown() {
-        
-        counter -= 1
-        timeLabel.text = String(counter)
-        
-        if counter == 0 {
-            timer.invalidate()
-            hideTimer.invalidate()
-            
-            for jerry in jerryArray {
-                jerry.isHidden = true
-            }
-            
-            //HighScore
-            
-            if self.score > self.highScore {
-                self.highScore = self.score
-                highScoreLabel.text = "\(self.highScore)"
-                UserDefaults.standard.set(self.highScore, forKey: "highscore")
-            }
-            
-            
-            //Alert
-            
-            let alert = UIAlertController(title: "Time's Up", message: "One more?", preferredStyle: UIAlertController.Style.alert)
-            let okButton = UIAlertAction(title: "OK", style: UIAlertAction.Style.default) { (UIAlertAction) in
-                self.button.isHidden = false
-            }
-            
-            let replayButton = UIAlertAction(title: "Replay", style: UIAlertAction.Style.default) { (UIAlertAction) in
-                //replay function
-                
-                self.score = 0
-                self.scoreLabel.text = "\(self.score)"
-                self.counter = 10
-                self.timeLabel.text = String(self.counter)
-                
-                
-                self.timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(self.countDown), userInfo: nil, repeats: true)
-                self.hideTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.hidejerry), userInfo: nil, repeats: true)
-            }
-            
-            alert.addAction(okButton)
-            alert.addAction(replayButton)
-            self.present(alert, animated: true, completion: nil)
-            
-            
-            
+        if score > highScore {
+            highScore = score
+            highScoreLabel.text = "\(highScore)"
+            UserDefaults.standard.set(highScore, forKey: "highscore")
         }
         
+        showAlert()
     }
-
-
+    
+    func showAlert() {
+        let alert = UIAlertController(title: "Time's Up", message: "One more?", preferredStyle: .alert)
+        let okButton = UIAlertAction(title: "OK", style: .default) { _ in
+            self.button.isHidden = false
+            self.jerryGif.isHidden = false
+        }
+        let replayButton = UIAlertAction(title: "Replay", style: .default) { _ in
+            self.startGame()
+        }
+        alert.addAction(okButton)
+        alert.addAction(replayButton)
+        present(alert, animated: true, completion: nil)
+    }
 }
-
-
 
 extension UIView {
     func dropShadow(scale: Bool = true, radius: CGFloat) {
